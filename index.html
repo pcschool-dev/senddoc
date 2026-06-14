@@ -7,7 +7,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>ระบบรับหนังสือราชการ</title>
+    <title>ระบบบันทึกหนังสือราชการ</title>
     <link rel="icon" type="image/x-icon" href="Logo.png">
     <script src="https://unpkg.com/@dotlottie/player-component@2.7.12/dist/dotlottie-player.mjs" type="module"></script>
     <style>
@@ -78,7 +78,7 @@
             return baseUrl + params + sep + "t=" + new Date().getTime();
         }
 
-        const baseAppScript = "https://script.google.com/a/macros/pcschool.ac.th/s/AKfycbwxP0nQxZ_w0DWUu8oxRM0d-Ke1LvFJBEg8GVQe94Jh2DNH0ZrkNMTqnzg8AvoxDaqFCA/exec";
+        const baseAppScript = "https://script.google.com/a/macros/pcschool.ac.th/s/AKfycbzpXi0SVGr6icd6vJJ5d_KMMEzngASeM7HJcvn7OJXn_Vxh85d2Nz33l6u54_fW3BpE/exec";
 
         // ฟังก์ชันช่วยปิด Loading แบบนิ่มนวล
         function hideLoader() {
@@ -101,7 +101,7 @@
                     FBloading.innerHTML = `<iframe scrolling="auto" src="openExternalBrowser.mp4"></iframe>`
                 } else if(seconds <= 0){
                     clearInterval(x);
-                    window.location.href = 'https://pcschool-dev.github.io/doc'
+                    window.location.href = 'https://pcschool-dev.github.io/senddoc'
                 }  				
             }, 1000); // ทุก ๆ 1 วิ
         
