@@ -98,7 +98,9 @@
             let finalUrl = idApply ? getNoCacheUrl(baseAppScript, `?id=${idApply}`) : getNoCacheUrl(baseAppScript);
             // นำทางทั้งหน้าไปยัง Apps Script แทนการฝังใน iframe
             // เพื่อเลี่ยงข้อจำกัด X-Frame-Options: SAMEORIGIN ของ script.google.com
-            window.location.replace(finalUrl);
+            setTimeout(function () {
+                window.location.replace(finalUrl);
+            }, 2000); // ปรับเวลาหน่วง (มิลลิวินาที) ได้ตามต้องการ
         }
     </script>
 </body>    
