@@ -51,7 +51,6 @@
             <span style="color: #666; font-size: 0.9em;">Please open in external browser.</span>
         </h4>       
     </div>  
-
     <!-- หน้า Loading หลัก -->
     <div id="loading" class="full-screen-center" style="transition: opacity 0.5s ease-out;">
         <dotlottie-player src="https://lottie.host/3924723b-b000-47d9-877a-48fc904e0c67/UiIOpIdURz.lottie" 
@@ -62,12 +61,9 @@
         </h4>
     </div>
     
-    <iframe style="display:none" id="link" enctype="multipart/form-data" scrolling="auto" src=""></iframe>
-    
     <script type="text/javascript">
         let preloader = document.getElementById("loading");
         let FBloading = document.getElementById("FBloading");
-        let link = document.getElementById("link");
         let idUID = window.location.search;
         let param = new URLSearchParams(idUID);
         let id = param.get('fbclid');
@@ -79,14 +75,7 @@
         }
 
         const baseAppScript = "https://script.google.com/a/macros/pcschool.ac.th/s/AKfycbzpXi0SVGr6icd6vJJ5d_KMMEzngASeM7HJcvn7OJXn_Vxh85d2Nz33l6u54_fW3BpE/exec";
-
-        // ฟังก์ชันช่วยปิด Loading แบบนิ่มนวล
-        function hideLoader() {
-            preloader.style.opacity = '0';
-            setTimeout(() => {
-                preloader.style.display = 'none';
-            }, 500);
-        }
+        
 
         if(id){
             preloader.style.display = 'none';
@@ -101,18 +90,15 @@
                     FBloading.innerHTML = `<iframe scrolling="auto" src="openExternalBrowser.mp4"></iframe>`
                 } else if(seconds <= 0){
                     clearInterval(x);
-                    window.location.href = 'https://pcschool-dev.github.io/senddoc'
+                    window.location.href = 'https://pcschool-dev.github.io/doc'
                 }  				
             }, 1000); // ทุก ๆ 1 วิ
         
         } else {
             let finalUrl = idApply ? getNoCacheUrl(baseAppScript, `?id=${idApply}`) : getNoCacheUrl(baseAppScript);
-            link.src = finalUrl;
-            
-            link.onload = function() {
-                hideLoader();
-                link.style.display = 'block';
-            };
+            // นำทางทั้งหน้าไปยัง Apps Script แทนการฝังใน iframe
+            // เพื่อเลี่ยงข้อจำกัด X-Frame-Options: SAMEORIGIN ของ script.google.com
+            window.location.replace(finalUrl);
         }
     </script>
 </body>    
