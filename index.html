@@ -51,6 +51,7 @@
             <span style="color: #666; font-size: 0.9em;">Please open in external browser.</span>
         </h4>       
     </div>  
+
     <!-- หน้า Loading หลัก -->
     <div id="loading" class="full-screen-center" style="transition: opacity 0.5s ease-out;">
         <dotlottie-player src="https://lottie.host/3924723b-b000-47d9-877a-48fc904e0c67/UiIOpIdURz.lottie" 
@@ -59,11 +60,21 @@
         <h4 style="color: #333; font-family: 'Sarabun', sans-serif; font-weight: bold; margin-top: 20px;">
             กำลังตรวจสอบความปลอดภัย
         </h4>
+        <!-- ลิงก์สำรองแบบกดเอง (ซ่อนไว้ก่อน โผล่เมื่อรอนานเกินไป) -->
+        <a id="directLink" href="#" target="_top"
+            style="display:none; margin-top:18px; color:#1d4ed8; font-family:'Sarabun',sans-serif; font-size:0.95em; text-decoration:underline;">
+            ถ้าหน้าไม่แสดง คลิกที่นี่เพื่อเปิดโดยตรง
+        </a>
     </div>
-    
+
+    <!-- iframe หลักสำหรับแสดงระบบ (ซ่อนไว้จนกว่าจะโหลดสำเร็จ) -->
+    <iframe id="link" style="display:none" scrolling="auto" src=""></iframe>
+
     <script type="text/javascript">
         let preloader = document.getElementById("loading");
         let FBloading = document.getElementById("FBloading");
+        let link = document.getElementById("link");
+        let directLink = document.getElementById("directLink");
         let idUID = window.location.search;
         let param = new URLSearchParams(idUID);
         let id = param.get('fbclid');
@@ -75,7 +86,14 @@
         }
 
         const baseAppScript = "https://script.google.com/a/macros/pcschool.ac.th/s/AKfycbzpXi0SVGr6icd6vJJ5d_KMMEzngASeM7HJcvn7OJXn_Vxh85d2Nz33l6u54_fW3BpE/exec";
-        
+
+        // ฟังก์ชันช่วยปิด Loading แบบนิ่มนวล
+        function hideLoader() {
+            preloader.style.opacity = '0';
+            setTimeout(() => {
+                preloader.style.display = 'none';
+            }, 500);
+        }
 
         if(id){
             preloader.style.display = 'none';
@@ -96,11 +114,35 @@
         
         } else {
             let finalUrl = idApply ? getNoCacheUrl(baseAppScript, `?id=${idApply}`) : getNoCacheUrl(baseAppScript);
-            // นำทางทั้งหน้าไปยัง Apps Script แทนการฝังใน iframe
-            // เพื่อเลี่ยงข้อจำกัด X-Frame-Options: SAMEORIGIN ของ script.google.com
-            setTimeout(function () {
+
+            let settled = false;
+
+            // สำรอง: ถ้าฝังใน iframe ไม่ได้ (เช่น โดน X-Frame-Options: SAMEORIGIN
+            // ตอน Google เด้งไปหน้า login) onload จะไม่ยิงภายในเวลาที่กำหนด
+            // -> เปลี่ยนไปเปิดลิงก์ /exec ตรง ๆ ทั้งแท็บ เพื่อให้ล็อกอิน/ใช้งานต่อได้
+            let fallbackTimer = setTimeout(function () {
+                if (settled) return;
+                settled = true;
                 window.location.replace(finalUrl);
-            }, 2000); // ปรับเวลาหน่วง (มิลลิวินาที) ได้ตามต้องการ
+            }, 6000); // เวลารอ iframe ก่อนตัดสินใจ fallback (มิลลิวินาที) — ปรับได้
+
+            // ใช้ iframe เป็นหลัก: ถ้าโหลดในกรอบสำเร็จ -> ยกเลิก fallback แล้วแสดงเต็มจอ
+            link.onload = function () {
+                if (settled) return;
+                settled = true;
+                clearTimeout(fallbackTimer);
+                hideLoader();
+                link.style.display = 'block';
+            };
+            // console.log("finalUrl",finalUrl);
+            link.src = finalUrl;
+
+            // ลิงก์สำรองแบบกดเอง — โผล่ขึ้นถ้ารอนานเกินไป (ตาข่ายกันพลาด
+            // เผื่อบางเบราว์เซอร์ตรวจการบล็อก iframe อัตโนมัติไม่ได้)
+            directLink.href = finalUrl;
+            setTimeout(function () {
+                if (!settled) directLink.style.display = 'inline-block';
+            }, 3000); // เวลาโผล่ลิงก์สำรอง (มิลลิวินาที) — ปรับได้
         }
     </script>
 </body>    
