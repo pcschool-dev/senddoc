@@ -277,7 +277,7 @@
         window.addEventListener('message', function (ev) {
           var d = ev.data;
           if (d && (d.tes === 'auth' || d.tes === 'gslot')) setTimeout(function () {
-            gTrace(d.tes === 'gslot' ? 'slot ' + (d.rect ? Math.round(d.rect.y) : 'null') : d.state);
+            gTrace(d.tes === 'gslot' ? 'slot ' + (d.rect ? Math.round(d.rect.y) : 'null ' + (d.why || '')) : d.state);
           }, 0);
           if (!d || (d.tes !== 'auth' && d.tes !== 'gslot') || !/\.googleusercontent\.com$/.test(String(ev.origin))) return;
           gApp = ev.source; gOrigin = ev.origin;
