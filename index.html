@@ -34,6 +34,10 @@
         #gfloat { display: none; position: fixed; z-index: 5; align-items: center; justify-content: center;
                   background: #fff; border-radius: 999px; }
         #gfloat.on { display: flex; }
+        /* ปุ่มสำรองเมื่อปุ่มของ Google ไม่ขึ้น (เบราว์เซอร์ในแอป LINE/Facebook) — หน้าตาเลียนปุ่ม Google */
+        #gfb { width: 100%; height: 40px; border: 1px solid #dadce0; border-radius: 999px; background: #fff; color: #3c4043;
+          font: 500 14px/1 'Sarabun', sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
+        #gfb .gfb-g { font-weight: 700; color: #4285f4; font-size: 16px; }
         /* สร้าง Class ส่วนกลางสำหรับจัดกึ่งกลาง */
         .full-screen-center {
             display: flex;
@@ -77,7 +81,7 @@
 
     <!-- iframe หลักสำหรับแสดงระบบ (ซ่อนไว้จนกว่าจะโหลดสำเร็จ) -->
     <iframe id="link" style="display:none" scrolling="auto" src=""></iframe>
-    <div id="gfloat" role="region" aria-label="เข้าสู่ระบบด้วย Google"><div id="gbtn"></div></div>
+    <div id="gfloat" role="region" aria-label="เข้าสู่ระบบด้วย Google"><div id="gbtn"></div><button type="button" id="gfb" style="display:none"></button></div>
 
     <script type="text/javascript">
         let preloader = document.getElementById("loading");
@@ -177,20 +181,63 @@
           return true;
         }
 
+        /*
+         * เบราว์เซอร์ในแอป (LINE, Facebook, Instagram) — Google ไม่ยอมวาดปุ่มลงชื่อเข้าใช้ในเว็บวิวของแอป
+         * (รอบแรกเข้าได้เพราะ Google เข้าให้อัตโนมัติ พอออกจากระบบซึ่งปิดการเข้าอัตโนมัติ ก็ไม่เหลือทางเข้า — ต.ค. 2569)
+         * จึงแสดงปุ่มของเราเอง "เปิดในเบราว์เซอร์" แทน: LINE เปิด URL ที่มี openExternalBrowser=1 ใน Safari/Chrome ให้เอง
+         */
+        var gInApp = /\bLine\/|FBAN|FBAV|Instagram/i.test(navigator.userAgent);
+        var gFbTimer = 0;
+
+        function gFallback(kind) {
+          var fb = document.getElementById('gfb'), btn = document.getElementById('gbtn');
+          if (!kind) { fb.style.display = 'none'; btn.style.display = ''; return; }
+          btn.style.display = 'none';
+          fb.style.display = 'flex';
+          if (kind === 'open') {
+            fb.innerHTML = '<span class="gfb-g">G</span>เปิดในเบราว์เซอร์เพื่อเข้าด้วย Google';
+            fb.onclick = function () {
+              var u = new URL(location.href);
+              u.searchParams.set('openExternalBrowser', '1');
+              location.href = u.toString();
+            };
+          } else {
+            // ปุ่มของ Google ไม่ขึ้นด้วยเหตุอื่น — เรียกหน้าต่างเลือกบัญชีของ Google ตรง ๆ (ยังต้องกดเลือกบัญชีเอง)
+            fb.innerHTML = '<span class="gfb-g">G</span>ลงชื่อเข้าใช้ด้วย Google';
+            fb.onclick = function () {
+              if (gReadyNow()) google.accounts.id.prompt(); else location.reload();
+            };
+          }
+        }
+
         function gPlace() {
-          if (!gWant || !gRect || !gInitOnce()) { gFloat.classList.remove('on'); return; }
+          if (!gWant || !gRect) { gFloat.classList.remove('on'); return; }
           var fr = link.getBoundingClientRect();
           gFloat.style.left = (fr.left + gRect.x) + 'px';
           gFloat.style.top = (fr.top + gRect.y) + 'px';
           gFloat.style.width = gRect.w + 'px';
           gFloat.style.height = gRect.h + 'px';
           gFloat.classList.add('on');
-          // ปุ่มของ Google กว้างได้ 200–400px — วาดใหม่เมื่อความกว้างช่องเปลี่ยนจริง (หมุนจอ) ไม่ใช่ทุกครั้งที่เลื่อน
+          if (gInApp) { gFallback('open'); return; }
+          if (!gInitOnce()) {
+            // สคริปต์ Google ยังไม่มา (เน็ตช้า/ถูกบล็อก) — รอ 4 วิแล้วให้ปุ่มสำรอง ไม่ปล่อยช่องว่างค้าง
+            clearTimeout(gFbTimer);
+            gFbTimer = setTimeout(function () { if (gWant && !gInitOnce()) gFallback('prompt'); }, 4000);
+            return;
+          }
+          // ปุ่มของ Google กว้างได้ 200–400px — วาดใหม่เมื่อความกว้างช่องเปลี่ยนจริง (หมุนจอ) หรือเพิ่งกลับมาแสดง
           var w = Math.max(200, Math.min(400, Math.floor(gRect.w)));
           if (Math.abs(w - gBtnW) > 4) {
             gBtnW = w;
+            gFallback('');
             google.accounts.id.renderButton(document.getElementById('gbtn'), { theme: 'outline', size: 'large',
               text: 'signin_with', shape: 'pill', locale: 'th', width: w });
+            // วาดแล้วแต่ไม่มีปุ่มจริงโผล่ใน 3 วิ (เบราว์เซอร์ที่ Google ไม่รองรับ) — สลับเป็นปุ่มสำรอง
+            clearTimeout(gFbTimer);
+            gFbTimer = setTimeout(function () {
+              var f = document.querySelector('#gbtn iframe');
+              if (gWant && !(f && f.getBoundingClientRect().height > 10)) gFallback('prompt');
+            }, 3000);
           }
           if (!gNoAuto && !gPrompted) { gPrompted = true; google.accounts.id.prompt(); }
         }
