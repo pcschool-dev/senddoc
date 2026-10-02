@@ -235,8 +235,8 @@
             // วาดแล้วแต่ไม่มีปุ่มจริงโผล่ใน 3 วิ (เบราว์เซอร์ที่ Google ไม่รองรับ) — สลับเป็นปุ่มสำรอง
             clearTimeout(gFbTimer);
             gFbTimer = setTimeout(function () {
-              var f = document.querySelector('#gbtn iframe');
-              if (gWant && !(f && f.getBoundingClientRect().height > 10)) gFallback('prompt');
+              // วัดความสูงของปุ่มที่ Google วาดจริง — ปุ่มเป็น div ส่วน iframe ของ Google เป็นตัวช่วยที่สูง 0 (วัด iframe = เข้าใจผิดว่าไม่มีปุ่ม)
+              if (gWant && !(document.getElementById('gbtn').getBoundingClientRect().height > 10)) gFallback('prompt');
             }, 3000);
           }
           if (!gNoAuto && !gPrompted) { gPrompted = true; google.accounts.id.prompt(); }
@@ -251,8 +251,34 @@
           gApp.postMessage({ tes: 'gcred', credential: resp.credential }, gOrigin);
         }
 
+        /* ตัวช่วยไล่ปัญหาบนมือถือ — เปิดด้วย ?gdebug=1 เท่านั้น ผู้ใช้ทั่วไปไม่เห็น
+           แสดงข้อความล่าสุดที่หน้านี้ได้รับจากระบบ + สถานะปุ่ม ให้ถ่ายภาพหน้าจอส่งมาดู */
+        var gDbg = /[?&]gdebug=1/.test(location.search) ? document.createElement('pre') : null;
+        var gLog = [];
+        function gTrace(t) {
+          if (!gDbg) return;
+          var f = document.querySelector('#gbtn iframe'), fr = link.getBoundingClientRect();
+          gLog.push(new Date().toTimeString().slice(3, 8) + ' ' + t);
+          if (gLog.length > 9) gLog.shift();
+          gDbg.textContent = gLog.join('\n') + '\n--\nwant=' + gWant + ' init=' + gInit + ' noAuto=' + gNoAuto +
+            ' rect=' + (gRect ? Math.round(gRect.x) + ',' + Math.round(gRect.y) + ',' + Math.round(gRect.w) : 'null') +
+            '\nfloat=' + gFloat.className + ' top=' + gFloat.style.top + ' btnW=' + gBtnW +
+            '\ngsi=' + gReadyNow() + ' iframe=' + (f ? Math.round(f.getBoundingClientRect().height) : 'none') +
+            ' fb=' + document.getElementById('gfb').style.display + ' frame=' + Math.round(fr.top) + ',' + Math.round(fr.height) +
+            ' inApp=' + gInApp + '\nua=' + navigator.userAgent.slice(-60);
+        }
+        if (gDbg) {
+          gDbg.style.cssText = 'position:fixed;left:4px;right:4px;bottom:4px;z-index:99999;margin:0;padding:6px;' +
+            'background:rgba(0,0,0,.82);color:#9f9;font:10px/1.35 monospace;white-space:pre-wrap;border-radius:6px;pointer-events:none';
+          document.body.appendChild(gDbg);
+          setInterval(function () { gTrace('tick'); gLog.pop(); }, 1500);
+        }
+
         window.addEventListener('message', function (ev) {
           var d = ev.data;
+          if (d && (d.tes === 'auth' || d.tes === 'gslot')) setTimeout(function () {
+            gTrace(d.tes === 'gslot' ? 'slot ' + (d.rect ? Math.round(d.rect.y) : 'null') : d.state);
+          }, 0);
           if (!d || (d.tes !== 'auth' && d.tes !== 'gslot') || !/\.googleusercontent\.com$/.test(String(ev.origin))) return;
           gApp = ev.source; gOrigin = ev.origin;
           if (d.tes === 'gslot') { gRect = d.rect || null; gPlace(); return; }
