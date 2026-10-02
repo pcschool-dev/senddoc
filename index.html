@@ -215,6 +215,8 @@
             gPlace();
           } else {
             gWant = false; gRect = null; gPrompted = false;
+            // ปุ่มที่ซ่อนไปแล้ว (เข้าระบบ/ออกจากระบบ) ต้องวาดใหม่ตอนกลับมา — ของเดิมค้างว่างบน iOS จนเห็นแค่ "กำลังโหลดปุ่ม"
+            gBtnW = 0;
             gFloat.classList.remove('on');
             try { google.accounts.id.cancel(); } catch (e) { }
             if (d.state === 'logout') {
