@@ -125,7 +125,7 @@
                 if (settled) return;
                 settled = true;
                 window.location.replace(finalUrl);
-            }, 6000); // เวลารอ iframe ก่อนตัดสินใจ fallback (มิลลิวินาที) — ปรับได้
+            }, param.has('ticket') ? 20000 : 6000); // เวลารอ iframe ก่อนตัดสินใจ fallback (มิลลิวินาที) — กลับจากบัญชีกลางรอนานขึ้น (เปิดซ้ำ = ตั๋วถูกใช้ซ้ำ)
 
             // ใช้ iframe เป็นหลัก: ถ้าโหลดในกรอบสำเร็จ -> ยกเลิก fallback แล้วแสดงเต็มจอ
             link.onload = function () {
