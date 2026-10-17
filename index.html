@@ -87,8 +87,9 @@
         let idApply = param.get('id');
         
         function getNoCacheUrl(baseUrl, params = "") {
-            let sep = baseUrl.includes('?') ? '&' : '?';
-            return baseUrl + params + sep + "t=" + new Date().getTime();
+            // ดู ? จากลิงก์ทั้งเส้น (เดิมดูแค่ baseUrl → "?id=x?t=…" / "&state=…?t=…" ทำให้ค่าสุดท้ายเพี้ยน)
+            let u = baseUrl + params, sep = u.includes('?') ? '&' : '?';
+            return u + sep + "t=" + new Date().getTime();
         }
 
         const baseAppScript = "https://script.google.com/a/macros/pcschool.ac.th/s/AKfycbzpXi0SVGr6icd6vJJ5d_KMMEzngASeM7HJcvn7OJXn_Vxh85d2Nz33l6u54_fW3BpE/exec";
