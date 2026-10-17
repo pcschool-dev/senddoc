@@ -105,7 +105,16 @@
             // เปิดในแอป Facebook -> fbgate.js ขึ้นหน้าเตือนแล้ว ไม่ต้องโหลดระบบ (ในแอป Facebook ขึ้นหน้าขาว)
             preloader.style.display = 'none';
         } else {
-            let finalUrl = idApply ? getNoCacheUrl(baseAppScript, `?id=${idApply}`) : getNoCacheUrl(baseAppScript);
+            // ส่งต่อให้แอป: ?id= (เปิดเอกสาร) และ ?ticket=&state=&error= (กลับจากบัญชีผู้ใช้กลาง)
+            let fwd = new URLSearchParams();
+            ['id', 'ticket', 'state', 'error'].forEach(function (k) { if (param.get(k)) fwd.set(k, param.get(k)); });
+            let finalUrl = fwd.toString() ? getNoCacheUrl(baseAppScript, '?' + fwd.toString()) : getNoCacheUrl(baseAppScript);
+            // ตั๋วใช้ได้ครั้งเดียว — ลบออกจากแถบที่อยู่ทันที กดรีเฟรชจะได้ไม่ส่งตั๋วเดิมซ้ำ
+            if (param.has('ticket')) {
+                let keep = new URLSearchParams(location.search);
+                ['ticket', 'state', 'error'].forEach(function (k) { keep.delete(k); });
+                try { history.replaceState(null, '', location.pathname + (keep.toString() ? '?' + keep.toString() : '') + location.hash); } catch (e) { }
+            }
 
             let settled = false;
 
